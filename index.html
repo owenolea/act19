@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Portal de Normativas - DGCyE Provincia de Buenos Aires</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 24px; }
+        .pagina { width: min(1120px, 100%); margin: 0 auto; }
+        header {
+            background: #1e293b;
+            padding: 24px;
+            border-radius: 12px;
+            border-bottom: 4px solid #eab308;
+            margin-bottom: 22px;
+        }
+        h1 { margin: 0; font-size: clamp(1.3rem, 3vw, 1.8rem); color: #facc15; }
+        header p { margin: 10px 0 0; color: #cbd5e1; }
+        .grid-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; align-items: start; }
+        .card { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 16px; border-left: 4px solid #38bdf8; }
+        .card h2, .card h3 { margin-top: 0; }
+        input, select {
+            width: 100%;
+            padding: 11px 12px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #fff;
+            font: inherit;
+        }
+        input:focus, select:focus, a:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+        label { font-weight: 600; }
+        .badge { display: inline-block; background: #334155; color: #7dd3fc; padding: 5px 9px; border-radius: 4px; font-size: .82rem; font-weight: 700; }
+        .btn-descarga {
+            background: #eab308;
+            color: #0f172a;
+            border: 0;
+            padding: 9px 12px;
+            border-radius: 5px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .btn-descarga:hover { background: #facc15; }
+        .texto-secundario { color: #94a3b8; font-size: .92rem; }
+        #estado-resultados { color: #cbd5e1; margin: 0 0 12px; }
+        .resultado h3 { margin: 12px 0 8px; color: #38bdf8; }
+        .resultado p { line-height: 1.55; }
+        .vacio { border-left-color: #eab308; }
+        hr { border: 0; border-top: 1px solid #334155; margin: 18px 0; }
+
+        @media (max-width: 760px) {
+            body { padding: 14px; }
+            .grid-layout { grid-template-columns: 1fr; gap: 0; }
+            header, .card { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="pagina">
+        <header>
+            <h1>🏛️ DGCyE - Buscador de Normativas y Planes de Estudio</h1>
+            <p>Sistema de consulta rápida para instituciones educativas de la Provincia de Buenos Aires.</p>
+        </header>
+
+        <div class="grid-layout">
+            <section aria-label="Buscador y resultados">
+                <div class="card">
+                    <h2>🔍 Filtrado dinámico de resoluciones</h2>
+                    <label for="buscador">Buscar por número, palabra clave o descripción:</label>
+                    <input type="search" id="buscador" placeholder="Ej.: 651, técnicas, prácticas..." autocomplete="off" oninput="filtrarNormativas()">
+
+                    <label for="filtro-tipo">Tipo de norma:</label>
+                    <select id="filtro-tipo" onchange="filtrarNormativas()">
+                        <option value="todos">Todas las normativas</option>
+                        <option value="Resolución">Resolución</option>
+                        <option value="Disposición">Disposición</option>
+                        <option value="Circular">Circular</option>
+                    </select>
+                </div>
+                <p id="estado-resultados" aria-live="polite"></p>
+                <div id="contenedor-resultados" aria-live="polite"></div>
+            </section>
+
+            <aside aria-label="Filtros y recursos">
+                <div class="card">
+                    <h2>📅 Calendario histórico</h2>
+                    <label for="filtro-anio">Seleccione el período:</label>
+                    <select id="filtro-anio" onchange="filtrarNormativas()">
+                        <option value="todos" selected>Todos los años</option>
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                    <hr>
+                    <h3>📂 Fuentes oficiales</h3>
+                    <p class="texto-secundario">Se cargaron algunas normas como muestra. Cada tarjeta enlaza al documento publicado en el Portal ABC de la DGCyE.</p>
+                    <a href="https://abc.gob.ar" class="btn-descarga" target="_blank" rel="noopener noreferrer">Ir al Portal ABC</a>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        // Selección breve de documentos oficiales publicados en el Portal ABC.
+        const baseDatosNormativas = [
+            {
+                id: 1,
+                nro: "Resolución N° 3866/24",
+                tipo: "Resolución",
+                anio: "2024",
+                desc: "Convoca al concurso de títulos, antecedentes y oposición para cubrir cargos titulares de directores y vicedirectores del Nivel Secundario.",
+                url: "https://abc.gob.ar/secretarias/sites/default/files/2026-09/RESOC-2024-3866-GDEBA-DGCYE%20Y%20ANEXOS.pdf"
+            },
+            {
+                id: 2,
+                nro: "Resolución N° 6179/25",
+                tipo: "Resolución",
+                anio: "2025",
+                desc: "Establece pautas para implementar pruebas de selección por evaluación de títulos, antecedentes y oposición en Nivel Superior.",
+                url: "https://abc.gob.ar/sad/sites/default/files/2025-11/269_2025%20-%20COMUNICACI%C3%93N%20CONJUNTA%2083_25,%20Resoc-2025-6179-GDEBA-DGCYE.pdf"
+            },
+            {
+                id: 3,
+                nro: "Disposición N° 21/25 (MAD y Acrecentamiento)",
+                tipo: "Disposición",
+                anio: "2025",
+                desc: "Normativa del Movimiento Anual Docente y Acrecentamiento 2025-2026. Enlace al Anexo 1 publicado por ABC.",
+                url: "https://abc.gob.ar/sad/sites/default/files/2025-07/ANEXO%201%20DISPO-2025-21-GDEBA-DTCDGCYE%20.pdf"
+            },
+            {
+                id: 4,
+                nro: "Circular Conjunta N° 1/25",
+                tipo: "Circular",
+                anio: "2025",
+                desc: "Acciones de inicio del ciclo lectivo relacionadas con vacantes.",
+                url: "https://abc.gob.ar/secretarias/sites/default/files/2025-03/circular%201.2025.pdf"
+            },
+            {
+                id: 5,
+                nro: "Resolución RESOC-2026-275-GDEBA-DGCYE",
+                tipo: "Resolución",
+                anio: "2026",
+                desc: "Documento oficial PAD 2026. Incluye disposiciones para pruebas de selección ante traslados entre niveles o modalidades.",
+                url: "https://abc.gob.ar/sad/sites/default/files/2026-02/PAD%202026.pdf"
+            }
+        ];
+
+        // Filtra en memoria en O(n): una pasada por los registros disponibles.
+        function filtrarNormativas() {
+            const texto = normalizarTexto(document.getElementById("buscador").value.trim());
+            const tipoSeleccionado = document.getElementById("filtro-tipo").value;
+            const anioSeleccionado = document.getElementById("filtro-anio").value;
+
+            const resultadosFiltrados = baseDatosNormativas.filter(item => {
+                const textoNormativa = normalizarTexto(`${item.nro} ${item.desc} ${item.tipo} ${item.anio}`);
+                const coincideTexto = textoNormativa.includes(texto);
+                const coincideTipo = tipoSeleccionado === "todos" || item.tipo === tipoSeleccionado;
+                const coincideAnio = anioSeleccionado === "todos" || item.anio === anioSeleccionado;
+                return coincideTexto && coincideTipo && coincideAnio;
+            });
+
+            renderizarResultados(resultadosFiltrados);
+        }
+
+        function normalizarTexto(texto) {
+            return texto
+                .toLocaleLowerCase("es")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function renderizarResultados(lista) {
+            const contenedor = document.getElementById("contenedor-resultados");
+            const estado = document.getElementById("estado-resultados");
+            estado.textContent = `${lista.length} ${lista.length === 1 ? "normativa encontrada" : "normativas encontradas"}.`;
+
+            if (lista.length === 0) {
+                contenedor.innerHTML = '<div class="card vacio"><p>No se encontraron normativas coincidentes. Pruebe con otros filtros.</p></div>';
+                return;
+            }
+
+            contenedor.innerHTML = lista.map(item => `
+                <article class="card resultado">
+                    <span class="badge">${item.tipo} - Año ${item.anio}</span>
+                    <h3>${item.nro}</h3>
+                    <p>${item.desc}</p>
+                    <a href="${item.url}" class="btn-descarga" target="_blank" rel="noopener noreferrer">📄 Ver documento oficial</a>
+                </article>
+            `).join("");
+        }
+
+        // Aplica también los filtros iniciales al cargar (por defecto, año 2026).
+        filtrarNormativas();
+    </script>
+</body>
+</html>
